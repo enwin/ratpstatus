@@ -206,7 +206,7 @@ class Day
     public function getColorClass($nbMinutes, $ligne) {
         $date = (clone $this->getDateStart())->modify("+ ".$nbMinutes." minutes");
         if($date > (new DateTime())) {
-            return 'e';
+            return 'no';
         }
         if(!$this->isLigneOpen($ligne, $date)) {
             return 'no';
@@ -233,18 +233,73 @@ class Day
             return null;
         }
         if(!$this->isLigneOpen($ligne, $date)) {
-            return '%no%';
+            return '<p>Le service est terminé ou pas encore commencé</p>';
         }
         $message = null;
         foreach($this->getDistruptionsByLigneInPeriod($ligne, $date) as $disruption) {
-            $message .= ";%".$disruption->getId()."%";
+            $message = '<section><h2>' . str_replace($ligne . " : ", '', $disruption->getUniqueTitle()) . '</h2>' . str_replace('<br>', '</p><p>', $disruption->getMessage()) . '</section>';
         }
 
         if($message) {
             return $message;
         }
 
-        return "%ok%";
+        // return "%ok%";
+        return '<p>Rien à signaler</p>';
+    }
+
+    public function getSummary($ligne) {
+        $summary = [];
+        $summaryEntry = 0;
+
+        for($i = 0; $i <= 1380; $i = $i + 2) {
+            $lastEntry = $summary[$summaryEntry];
+            $color = $this->getColorClass($i, $ligne);
+            $info = $this->getInfo($i, $ligne);
+            $start = sprintf("%02d", (intval($i / 60) + 4) % 24) . 'h';
+            $minutes = ($i % 60);
+            $timeOffset = $minutes + (($minutes - $minutes%10)/10);
+
+            if($minutes % 10 != 0){
+                $timeOffset += 1;
+            }
+
+            if($minutes != 0) {
+                $start .= sprintf("%02d", $minutes );
+            }
+
+            $end = sprintf("%02d", (intval(($i+2) / 60) + 4) % 24) . 'h';
+
+            if(($i+2) % 60 != 0) {
+                $end .= sprintf("%02d", (($i+2) % 60) );
+            }
+
+            if(!$lastEntry ){
+                $summary[$summaryEntry] = [
+                    "color" => $color,
+                    "info" => $info,
+                    "count" => 1,
+                    "start" => $start,
+                    "end" => $end,
+                    "offset" => $timeOffset
+                ];
+            } else if ( $lastEntry["color"] == $color && $lastEntry["info"] == $info) {
+                $summary[$summaryEntry]["count"] = $summary[$summaryEntry]["count"] + 1;
+                $summary[$summaryEntry]["end"] = $end;
+            } else {
+                $summaryEntry = $summaryEntry + 1;
+                $summary[$summaryEntry] = [
+                    "color" => $color,
+                    "info" => $info,
+                    "count" => 1,
+                    "start" => $start,
+                    "end" => $end,
+                    "offset" => $timeOffset
+                ];
+            }
+        }
+
+        return $summary;
     }
 
     public function toJson() {

@@ -22,6 +22,9 @@ $mode = isset($_GET['mode']) ? $_GET['mode'] : 'metros';
 
 $day = new Day($_GET['date']);
 
+$prevDay = $day->getDateStartYesterday() >= new DateTime('2024-04-23');
+$nextDay = !$day->isTomorrow();
+
 $GLOBALS['isStaticResponse'] = isset($_SERVER['argv']) && !is_null($_SERVER['argv']);
 
 function url($url) {
