@@ -9,7 +9,6 @@ if(is_file($file)) {
 }
 
 if(count($_POST)) {
-
 foreach($_POST['type'] as $id => $type) {
     if(!$type && !isset($userDisruptions[$id])) {
         continue;
